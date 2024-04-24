@@ -1,0 +1,14 @@
+kind: pipeline
+name: default
+
+steps:
+- name: docker  
+  image: plugins/docker
+  settings:
+    username:
+      from_secret: dockerhub_username
+    password:
+      from_secret: dockerhub_token
+    repo: elit3ge/test
+    tags:
+    - latest
