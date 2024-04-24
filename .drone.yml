@@ -12,9 +12,14 @@ steps:
     repo: elit3ge/test
     tags:
     - latest
-- name: Docker Hub Description
+    
+- name: github-action
+  image: plugins/github-actions
+  settings:
     uses: peter-evans/dockerhub-description@v3
     with:
-      username: ${{ secrets.DOCKERHUB_USERNAME }}
-      password: ${{ secrets.DOCKERHUB_token }}
-      repository: elit3ge/test
+        username:
+          from_secret: dockerhub_username
+        password:
+          from_secret: dockerhub_token
+        repository: elit3ge/test
