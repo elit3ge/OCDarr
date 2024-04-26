@@ -23,3 +23,5 @@ steps:
         password:
           from_secret: dockerhub_token
         repository: elit3ge/test
+  volumes:
+   - /var/run/docker.sock:/var/run/docker.sock
