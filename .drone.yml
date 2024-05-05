@@ -12,18 +12,3 @@ steps:
     repo: elit3ge/test
     tags:
     - latest
-    
-- name: github-action
-  image: plugins/github-actions
-  settings:
-    uses: peter-evans/dockerhub-description@v4
-    with:
-        username:
-          from_secret: dockerhub_username
-        password:
-          from_secret: dockerhub_token
-        repository: elit3ge/test
-volumes:
-- name: docker
-  host:
-    path: /var/run/docker.sock
