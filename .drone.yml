@@ -9,6 +9,6 @@ steps:
       from_secret: dockerhub_username
     password:
       from_secret: dockerhub_token
-    repo: elit3ge/test
+    repo: elit3ge/ocdarr
     tags:
     - latest
