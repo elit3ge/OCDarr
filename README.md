@@ -103,7 +103,7 @@ Docker Instructions
 
    Pull the Docker Image
 ```
-    docker pull vansmak/ocdarr:latest
+    docker pull vansmak/ocdarr:tagname
 ```
    Set Environment Variables or
 
@@ -114,7 +114,15 @@ Docker Instructions
 ```
   Run the Docker Container
 ```
-    docker run -d --env-file=.env -p 5001:5001 vansmak/ocdarr:latest
+    docker run -d --env-file=.env -p 5001:5001
+    --env CONFIG_PATH=/app/config/config.json
+    -v $(pwd):/app
+    -v $(pwd)/logs:/app/logs
+    -v $(pwd)/config:/app/config
+    -v $(pwd)/temp:/app/temp
+    --restart unless-stopped
+    vansmak/ocdarr:tagname
+
 ```
 
 
