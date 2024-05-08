@@ -114,14 +114,16 @@ Docker Instructions
 ```
   Run the Docker Container
 ```
-    docker run -d --env-file=.env -p 5001:5001
-    --env CONFIG_PATH=/app/config/config.json
-    -v $(pwd):/app
-    -v $(pwd)/logs:/app/logs
-    -v $(pwd)/config:/app/config
-    -v $(pwd)/temp:/app/temp
-    --restart unless-stopped
-    vansmak/ocdarr:tagname
+    docker run -d \
+      --env-file=.env \
+      --env CONFIG_PATH=/app/config/config.json \
+      -p 5001:5001 \
+      -v $(pwd):/app \
+      -v $(pwd)/logs:/app/logs \
+      -v $(pwd)/config:/app/config \
+      -v $(pwd)/temp:/app/temp \
+      --restart unless-stopped \
+      vansmak/ocdarr:arm
 
 ```
 
