@@ -125,10 +125,10 @@ def unmonitor_episodes(episode_ids):
         logging.error(f"Failed to unmonitor episodes. Response: {response.text}")
 
 def find_episodes_to_delete(episode_details, current_episode_number):
-    """Find episodes before the current episode to potentially delete, checking against 'ALWAYS_KEEP'."""
+    """Find episodes before the current episode to potentially delete, checking against 'always_keep'."""
     episodes_to_delete = []
     for ep in episode_details:
-        if ep['episodeNumber'] < current_episode_number and ep['seriesTitle'] not in ALWAYS_KEEP:
+        if ep['episodeNumber'] < current_episode_number and ep['seriesTitle'] not in always_keep:
             if ep['episodeFileId'] > 0:  # Ensure there is a file to delete
                 episodes_to_delete.append(ep['episodeFileId'])
     return episodes_to_delete
@@ -143,16 +143,16 @@ def delete_episodes_in_sonarr(episode_file_ids):
             logging.info(f"Successfully deleted episode file with ID: {episode_file_id}")
         else:
             logging.error(f"Failed to delete episode file. Response: {response.text}")
-def determine_keep_ids(current_episodes, episode_number, KEEP_WATCHED, ALWAYS_KEEP):
+def determine_keep_ids(current_episodes, episode_number, keep_watched, always_keep):
     # Keep the most recent episodes as specified by 'KEEP_WATCHED'
-    if isinstance(KEEP_WATCHED, int):
-        keep_ids = [ep['id'] for ep in sorted(current_episodes, key=lambda x: -x['episodeNumber'])[:KEEP_WATCHED]]
+    if isinstance(keep_watched, int):
+        keep_ids = [ep['id'] for ep in sorted(current_episodes, key=lambda x: -x['episodeNumber'])[:keep_watched]]
     else:
         # Keep all episodes in the current season if 'KEEP_WATCHED' is set to 'season'
         keep_ids = [ep['id'] for ep in current_episodes]
 
     # Ensure episodes with titles in 'ALWAYS_KEEP' are not deleted
-    keep_ids.extend(ep['id'] for ep in current_episodes if ep['seriesTitle'] in ALWAYS_KEEP and ep['id'] not in keep_ids)
+    keep_ids.extend(ep['id'] for ep in current_episodes if ep['seriesTitle'] in always_keep and ep['id'] not in keep_ids)
     return list(set(keep_ids))  # Remove duplicates and return the list
 
 def main():
@@ -171,7 +171,7 @@ def main():
                     unmonitor_episodes(unmonitor_ids)
 
                 # Handling deletions based on configuration
-                keep_ids = determine_keep_ids(current_season_episodes, episode_number, config['KEEP_WATCHED'], config['ALWAYS_KEEP'])
+                keep_ids = determine_keep_ids(current_season_episodes, episode_number, config['keep_watched'], config['always_keep'])
                 episodes_to_delete = find_episodes_to_delete(current_season_episodes, episode_number)
                 episodes_to_delete = [ep for ep in episodes_to_delete if ep['id'] not in keep_ids]
                 delete_episodes_in_sonarr(episodes_to_delete)
