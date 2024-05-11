@@ -144,14 +144,14 @@ def delete_episodes_in_sonarr(episode_file_ids):
         else:
             logging.error(f"Failed to delete episode file. Response: {response.text}")
 def determine_keep_ids(current_episodes, episode_number, keep_watched, always_keep):
-    # Keep the most recent episodes as specified by 'KEEP_WATCHED'
+    # Keep the most recent episodes as specified by 'keep_watched'
     if isinstance(keep_watched, int):
         keep_ids = [ep['id'] for ep in sorted(current_episodes, key=lambda x: -x['episodeNumber'])[:keep_watched]]
     else:
-        # Keep all episodes in the current season if 'KEEP_WATCHED' is set to 'season'
+        # Keep all episodes in the current season if 'keep_watched' is set to 'season'
         keep_ids = [ep['id'] for ep in current_episodes]
 
-    # Ensure episodes with titles in 'ALWAYS_KEEP' are not deleted
+    # Ensure episodes with titles in 'always_keep' are not deleted
     keep_ids.extend(ep['id'] for ep in current_episodes if ep['seriesTitle'] in always_keep and ep['id'] not in keep_ids)
     return list(set(keep_ids))  # Remove duplicates and return the list
 
