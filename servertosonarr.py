@@ -18,11 +18,10 @@ config = load_config()
 load_dotenv()
 
 # Define global variables based on environment settings
-
 SONARR_URL = os.getenv('SONARR_URL')
 SONARR_API_KEY = os.getenv('SONARR_API_KEY')
 LOG_PATH = os.getenv('LOG_PATH', '/app/logs/app.log')
-
+MISSING_LOG_PATH = os.getenv('MISSING_LOG_PATH', '/app/logs/missing.log')
 
 # Set operation-specific settings from config file
 get_option = config['get_option']
@@ -32,8 +31,14 @@ always_keep = config['always_keep']
 monitor_watched = config['monitor_watched']
 
 # Setup logging
-logging.basicConfig(filename=LOG_PATH, level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
+handler = logging.FileHandler(LOG_PATH)
+logger.addHandler(handler)
+missing_logger = logging.getLogger('missing')
+missing_handler = logging.FileHandler('/app/logs/missing.log')
+missing_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+missing_logger.addHandler(missing_handler)
 
 def get_server_activity():
     """Read current viewing details from Tautulli webhook stored data, using the updated labels."""
@@ -48,8 +53,6 @@ def get_server_activity():
         logging.error(f"Failed to read or parse data from Tautulli webhook: {str(e)}")
     return None, None, None
 
-
-
 def get_series_id(series_name):
     """Fetch series ID by name from Sonarr."""
     url = f"{SONARR_URL}/api/v3/series"
@@ -60,8 +63,10 @@ def get_series_id(series_name):
         for series in series_list:
             if series['title'].lower() == series_name.lower():
                 return series['id']
+        # Log to missing.log if series is not found
+        missing_logger.info(f"Series not found in Sonarr: {series_name}")
     else:
-        logging.error("Failed to fetch series ID.")
+        logging.error("Failed to fetch series from Sonarr.")
     return None
 
 def get_episode_details(series_id, season_number):
@@ -111,8 +116,6 @@ def trigger_episode_search_in_sonarr(episode_ids):
     else:
         logging.error("Failed to send episode search command. Response:", response.text)
 
-
-
 def unmonitor_episodes(episode_ids):
     """Unmonitor specified episodes in Sonarr."""
     unmonitor_url = f"{SONARR_URL}/api/v3/episode/monitor"
@@ -143,14 +146,14 @@ def delete_episodes_in_sonarr(episode_file_ids):
             logging.info(f"Successfully deleted episode file with ID: {episode_file_id}")
         else:
             logging.error(f"Failed to delete episode file. Response: {response.text}")
+
 def determine_keep_ids(current_episodes, episode_number, keep_watched, always_keep):
-    # Keep the most recent episodes as specified by 'keep_watched'
+    """Determine which episodes to keep based on 'keep_watched' and 'always_keep' settings."""
     if isinstance(keep_watched, int):
         keep_ids = [ep['id'] for ep in sorted(current_episodes, key=lambda x: -x['episodeNumber'])[:keep_watched]]
     else:
         # Keep all episodes in the current season if 'keep_watched' is set to 'season'
         keep_ids = [ep['id'] for ep in current_episodes]
-
     # Ensure episodes with titles in 'always_keep' are not deleted
     keep_ids.extend(ep['id'] for ep in current_episodes if ep['seriesTitle'] in always_keep and ep['id'] not in keep_ids)
     return list(set(keep_ids))  # Remove duplicates and return the list
@@ -162,25 +165,21 @@ def main():
         if series_id:
             current_season_episodes = get_episode_details(series_id, season_number)
             if current_season_episodes:
-               # Unmonitor all episodes watched up to the current one
+                # Unmonitor all episodes watched up to the current one
                 unmonitor_ids = [ep['id'] for ep in current_season_episodes if ep['episodeNumber'] <= episode_number]
                 logging.debug(f"IDs to unmonitor: {unmonitor_ids}")  # Debugging statement
-
                 # Unmonitor episodes based on the IDs only if monitor_watched is False
                 if not config['monitor_watched']:
                     unmonitor_episodes(unmonitor_ids)
-
                 # Handling deletions based on configuration
                 keep_ids = determine_keep_ids(current_season_episodes, episode_number, config['keep_watched'], config['always_keep'])
                 episodes_to_delete = find_episodes_to_delete(current_season_episodes, episode_number)
                 episodes_to_delete = [ep for ep in episodes_to_delete if ep['id'] not in keep_ids]
                 delete_episodes_in_sonarr(episodes_to_delete)
-
                 # Handling future episodes: monitor and potentially search based on action_option
                 remaining_current_season = [ep for ep in current_season_episodes if ep['episodeNumber'] > episode_number]
                 episodes_needed = config['get_option'] - len(remaining_current_season)
                 next_episode_ids = [ep['id'] for ep in remaining_current_season][:config['get_option']]
-                
                 if episodes_needed > 0:
                     next_season_episodes = get_episode_details(series_id, season_number + 1)
                     if next_season_episodes:
@@ -188,11 +187,9 @@ def main():
                         next_episode_ids.extend([ep['id'] for ep in next_season_episodes][:additional_episodes_needed])
                     else:
                         logging.info(f"No more seasons available after season {season_number} for series {series_name}.")
-
                 monitor_episodes(next_episode_ids, monitor=True)
                 if config['action_option'] == "search":
                     trigger_episode_search_in_sonarr(next_episode_ids)
-
             else:
                 logging.info("No episodes found for the current series and season.")
         else:
@@ -202,5 +199,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
