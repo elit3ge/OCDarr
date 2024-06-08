@@ -61,8 +61,8 @@
             <div class="form-group">
                 <label for="monitor_watched">Keep monitored if watched:</label>
                 <select id="monitor_watched" name="monitor_watched">
-                    <option value="true" {{ 'selected' if config.get('monitor_watched') == 'true' else '' }}>true</option>
-                    <option value="false" {{ 'selected' if config.get('monitor_watched') == 'false' else '' }}>false</option>/option>
+                    <option value="true" {{ 'selected' if config.get('monitor_watched') == True else '' }}>true</option>
+                    <option value="false" {{ 'selected' if config.get('monitor_watched') == False else '' }}>false</option>
                 </select>
             </div>
             <div class="form-group">
@@ -100,8 +100,7 @@
                         var messageDiv = document.createElement('div');
                         messageDiv.className = 'alert alert-success';
                         messageDiv.textContent = message;
-                        document.getElementById
-                        (section).prepend(messageDiv);
+                        document.getElementById(section).prepend(messageDiv);
         }
     });
 
