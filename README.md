@@ -130,11 +130,15 @@ Docker Instructions
 
 Modify config.json to fine-tune behavior locally at /config/config.json or http://dockerurl:port  settings.
 
-  get_option: '#' of episodes to get or 'season' for full seasons.
-  action_option: 'search' to search episodes, 'monitor' to only monitor.
-  keep_watched: '#' of watched episodes to keep or 'season' to keep current seasons episodes only OR 'all' will keep everything (no deleting)
-  always_keep: show names to keep even if delete is set, comma seperated
-  monitor_watched: true or false, keep watched episodes monitored or not
+      get_option: '#' of episodes to get or 'season' for full seasons.
+  
+      action_option: 'search' to search episodes, 'monitor' to only monitor.
+  
+      keep_watched: '#' of watched episodes to keep or 'season' to keep current seasons episodes only OR 'all' will keep everything (no deleting)
+  
+      always_keep: show names to keep even if delete is set, comma seperated
+  
+      monitor_watched: true or false, keep watched episodes monitored or not
 
 Additional Notes
 
