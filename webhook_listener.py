@@ -37,7 +37,7 @@ def load_config():
             return json.load(file)
     except FileNotFoundError:
         default_config = {
-            'get_option': 'episode',
+            'get_option': 1,
             'action_option': 'search',
             'keep_watched': 1,
             'monitor_watched': False,
@@ -115,7 +115,9 @@ def handle_server_webhook():
     if data:
         app.logger.info(f"Webhook received with data: {data}")
         try:
-            with open('/app/temp/data_from_tautulli.json', 'w') as f:
+            temp_dir = '/app/temp'
+            os.makedirs(temp_dir, exist_ok=True)  # Ensure the temp directory exists
+            with open(os.path.join(temp_dir, 'data_from_tautulli.json'), 'w') as f:
                 json.dump(data, f)
             app.logger.info("Data successfully written to data_from_tautulli.json")
             result = subprocess.run(["python3", "/app/servertosonarr.py"], capture_output=True, text=True)
