@@ -116,15 +116,15 @@ Docker Instructions
   Run the Docker Container
 ```
     docker run -d \
-      --env-file=.env \
+      --env-file .env \
       --env CONFIG_PATH=/app/config/config.json \
       -p 5001:5001 \
-      -v $(pwd):/app \
-      -v $(pwd)/logs:/app/logs \
-      -v $(pwd)/config:/app/config \
-      -v $(pwd)/temp:/app/temp \
+      -v ${PWD}/logs:/app/logs \
+      -v ${PWD}/config:/app/config \
+      -v ${PWD}/temp:/app/temp \
       --restart unless-stopped \
-      vansmak/ocdarr:arm
+      vansmak/ocdarr:amd64
+  
 
 ```
 
