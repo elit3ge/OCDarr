@@ -40,38 +40,41 @@
     </div>
 
     <div id="settings" style="display: none;">
-        <form id="settings-form" method="POST" action="{{ url_for('update_settings') }}">
-            <h3>Manage Settings</h3>
-            <div class="form-group">
-                <label for="get_option">How many more episodes to get?:</label>
-                <input type="text" id="get_option" name="get_option" placeholder="Enter 'Season' or number" value="{{ config.get('get_option', 'Season') }}">
-            </div>
-            <div class="form-group">
-                <label for="action_option">Action for Episodes:</label>
-                <select id="action_option" name="action_option">
-                    <option value="monitor" {{ 'selected' if config.get('action_option') == 'monitor' else '' }}>Monitor</option>
-                    <option value="search" {{ 'selected' if config.get('action_option') == 'search' else '' }}>Search</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="keep_watched">How many episodes to keep?:</label>
-                <input type="text" id="keep_watched" name="keep_watched" placeholder="Enter 'Season', 'All' or number" value="{{ config.get('keep_watched', 'Season') }}">
-            </div>
-            
-            <div class="form-group">
-                <label for="monitor_watched">Keep monitored if watched:</label>
-                <select id="monitor_watched" name="monitor_watched">
-                    <option value="true" {{ 'selected' if config.get('monitor_watched') == True else '' }}>true</option>
-                    <option value="false" {{ 'selected' if config.get('monitor_watched') == False else '' }}>false</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="always_keep">Shows to Always Keep (comma-separated):</label>
-                <input type="text" id="always_keep" name="always_keep" placeholder="e.g., Show1, Show2" value="{{ ', '.join(config.get('always_keep', [])) }}">
-            </div>
-           
-            <button type="submit">Update Settings</button>
-            </form>
+    <form id="settings-form" method="POST" action="{{ url_for('update_settings') }}">
+        <h3>Manage Settings</h3>
+        <div class="form-group">
+            <label for="get_option">How many more episodes to get?:</label>
+            <input type="text" id="get_option" name="get_option" placeholder="Enter 'Season' or number" value="{{ config.get('get_option', 'Season') }}">
+        </div>
+        <div class="form-group">
+            <label for="action_option">Action for Episodes:</label>
+            <select id="action_option" name="action_option">
+                <option value="monitor" {{ 'selected' if config.get('action_option') == 'monitor' else '' }}>Monitor</option>
+                <option value="search" {{ 'selected' if config.get('action_option') == 'search' else '' }}>Search</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="keep_watched">How many episodes to keep?:</label>
+            <input type="text" id="keep_watched" name="keep_watched" placeholder="Enter 'Season', 'All' or number" value="{{ config.get('keep_watched', 'Season') }}">
+        </div>
+        <div class="form-group">
+            <label for="monitor_watched">Keep monitored if watched:</label>
+            <select id="monitor_watched" name="monitor_watched">
+                <option value="true" {{ 'selected' if config.get('monitor_watched') == True else '' }}>true</option>
+                <option value="false" {{ 'selected' if config.get('monitor_watched') == False else '' }}>false</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="always_keep">Shows to Always Keep (comma-separated):</label>
+            <input type="text" id="always_keep" name="always_keep" placeholder="e.g., Show1, Show2" value="{{ ', '.join(config.get('always_keep', [])) }}">
+        </div>
+        <div class="form-group">
+            <label for="action_only">Shows to Perform Actions Only (comma-separated):</label>
+            <input type="text" id="action_only" name="action_only" placeholder="e.g., Show1, Show2" value="{{ ', '.join(config.get('action_only', [])) }}">
+        </div>
+        <button type="submit">Update Settings</button>
+    </form>
+</div>
             
             <div class="form-group">
                 <h4>Missing Series Log</h4>

@@ -123,8 +123,11 @@ def find_episodes_to_delete(all_episodes, keep_watched, last_watched_id):
         last_watched_season = max(ep['seasonNumber'] for ep in all_episodes if ep['id'] == last_watched_id)
         episodes_to_delete = [ep['episodeFileId'] for ep in all_episodes if ep['seasonNumber'] < last_watched_season and ep['episodeFileId'] > 0]
     elif isinstance(keep_watched, int):
-        episodes_to_delete = [ep['episodeFileId'] for ep in all_episodes if ep['id'] < last_watched_id and ep['episodeFileId'] > 0]
-        episodes_to_delete = episodes_to_delete[:len(episodes_to_delete) - keep_watched]
+        sorted_episodes = sorted(all_episodes, key=lambda ep: (ep['seasonNumber'], ep['episodeNumber']))
+        last_watched_index = next(i for i, ep in enumerate(sorted_episodes) if ep['id'] == last_watched_id)
+        keep_range = sorted_episodes[max(0, last_watched_index - keep_watched + 1):last_watched_index + 1]
+        keep_ids = {ep['id'] for ep in keep_range}
+        episodes_to_delete = [ep['episodeFileId'] for ep in all_episodes if ep['id'] not in keep_ids and ep['episodeFileId'] > 0]
 
     return episodes_to_delete
 
@@ -152,22 +155,32 @@ def delete_episodes_in_sonarr(episode_file_ids):
     if failed_deletes:
         logger.error(f"Failed to delete the following episode files: {failed_deletes}")
 
-def fetch_next_episodes(series_id, season_number, episode_number, num_episodes):
+def fetch_next_episodes(series_id, season_number, episode_number, get_option):
     """Fetch the next num_episodes episodes starting from the given season and episode."""
     next_episode_ids = []
 
-    # Get remaining episodes in the current season
-    current_season_episodes = get_episode_details(series_id, season_number)
-    next_episode_ids.extend([ep['id'] for ep in current_season_episodes if ep['episodeNumber'] > episode_number])
+    try:
+        num_episodes = int(get_option)
+        # Get remaining episodes in the current season
+        current_season_episodes = get_episode_details(series_id, season_number)
+        next_episode_ids.extend([ep['id'] for ep in current_season_episodes if ep['episodeNumber'] > episode_number])
 
-    # Fetch episodes from the next season if needed
-    next_season_number = season_number + 1
-    while len(next_episode_ids) < int(num_episodes):
-        next_season_episodes = get_episode_details(series_id, next_season_number)
-        next_episode_ids.extend([ep['id'] for ep in next_season_episodes])
-        next_season_number += 1
+        # Fetch episodes from the next season if needed
+        next_season_number = season_number + 1
+        while len(next_episode_ids) < num_episodes:
+            next_season_episodes = get_episode_details(series_id, next_season_number)
+            next_episode_ids.extend([ep['id'] for ep in next_season_episodes])
+            next_season_number += 1
 
-    return next_episode_ids[:int(num_episodes)]
+        return next_episode_ids[:num_episodes]
+    except ValueError:
+        if get_option == 'season':
+            # Fetch all remaining episodes in the current season
+            current_season_episodes = get_episode_details(series_id, season_number)
+            next_episode_ids.extend([ep['id'] for ep in current_season_episodes if ep['episodeNumber'] > episode_number])
+            return next_episode_ids
+        else:
+            raise ValueError(f"Invalid get_option value: {get_option}")
 
 def fetch_all_episodes(series_id):
     """Fetch all episodes for a series from Sonarr."""
@@ -183,8 +196,19 @@ def delete_old_episodes(series_id, keep_episode_ids):
     """Delete old episodes that are not in the keep list."""
     all_episodes = fetch_all_episodes(series_id)
     episodes_with_files = [ep for ep in all_episodes if ep['hasFile']]
-    episodes_to_delete = [ep['episodeFileId'] for ep in episodes_with_files if ep['id'] not in keep_episode_ids]
+    
+    if config['keep_watched'] == "all":
+        logger.info("No episodes to delete as keep_watched is set to 'all'.")
+        return
+    
+    if config['keep_watched'] == "season":
+        last_watched_season = max(ep['seasonNumber'] for ep in all_episodes if ep['id'] in keep_episode_ids)
+        episodes_to_delete = [ep['episodeFileId'] for ep in episodes_with_files if ep['seasonNumber'] < last_watched_season and ep['id'] not in keep_episode_ids]
+    else:
+        episodes_to_delete = [ep['episodeFileId'] for ep in episodes_with_files if ep['id'] not in keep_episode_ids]
+
     delete_episodes_in_sonarr(episodes_to_delete)
+
 
 def main():
     series_name, season_number, episode_number = get_server_activity()

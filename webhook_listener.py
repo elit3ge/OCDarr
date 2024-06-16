@@ -41,7 +41,8 @@ def load_config():
             'action_option': 'search',
             'keep_watched': 1,
             'monitor_watched': False,
-            'always_keep': []
+            'always_keep': [],
+            'action_only': []
         }
         save_config(default_config)
         return default_config
@@ -105,6 +106,7 @@ def update_settings():
     config['keep_watched'] = request.form.get('keep_watched')
     config['always_keep'] = [normalize_name(name.strip()) for name in request.form.get('always_keep', '').split(',') if name.strip()]
     config['monitor_watched'] = request.form.get('monitor_watched', 'false').lower() == 'true'
+    config['action_only'] = [normalize_name(name.strip()) for name in request.form.get('action_only', '').split(',') if name.strip()]
     save_config(config)
     return redirect(url_for('home', section='settings', message="Settings updated successfully"))
 
