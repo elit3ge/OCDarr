@@ -49,7 +49,7 @@ def fetch_series_and_episodes(preferences):
                     active_series.append({
                         'name': series['title'],
                         'latest_monitored_episode': f"S{episode['seasonNumber']}E{episode['episodeNumber']} - {episode['title']}",
-                        'artwork_url': f"{SONARR_URL}/api/v3/mediacover/{series['id']}/banner.jpg?apikey={SONARR_API_KEY}",
+                        'artwork_url': f"{SONARR_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
                         'sonarr_series_url': f"{SONARR_URL}/series/{series['titleSlug']}",
                         'dateAdded': date_added
                     })
@@ -78,7 +78,7 @@ def fetch_upcoming_premieres(preferences):
                 upcoming_premieres.append({
                     'name': series['title'],
                     'nextAiring': formatted_date,
-                    'artwork_url': f"{SONARR_URL}/api/v3/mediacover/{series['id']}/banner.jpg?apikey={SONARR_API_KEY}",
+                    'artwork_url': f"{SONARR_URL}/api/v3/mediacover/{series['id']}/poster.jpg?apikey={SONARR_API_KEY}",
                     'sonarr_series_url': f"{SONARR_URL}/series/{series['titleSlug']}"
                 })
 

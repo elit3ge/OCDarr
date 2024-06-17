@@ -3,6 +3,5 @@
     "action_option": "monitor",
     "keep_watched": "1",
     "monitor_watched": false,
-    "always_keep": [],
-    "action_only": []
+    "always_keep": []
 }
