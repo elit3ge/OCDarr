@@ -1,5 +1,6 @@
-# OCDarr
-
+#  <img src="https://github.com/Vansmak/OCDarr/assets/16037573/f802fece-e884-4282-8eb5-8c07aac1fd16" alt="logo" width="200"/>
+I recommend using the dev version 
+https://github.com/Vansmak/OCDarr/tree/dev
 OCDarr automates TV show maintenance in Sonarr based on Plex viewing activity via Tautulli. It ensures that the next episode is ready and cleans up watched episodes based on user-defined preferences. Ideal for keeping your media server tidy and your series up-to-date without manual intervention. Not useful for hoarders.  Sometimes I start an old show and never finish, or takes awhile before I really get into it. So This way I dont have full seasons sitting there. I also do not have other users outside my household and am not a rewatcher of tv so I like to delete after a show is watched. This will always have the next episode ready to go and the last episode watched saved just in case.  If I need to protect a show because someone else is behind me then I can set certain shows to not delete.  If someone prefers getting full season instead of one episode you can do that. For example, if you have a new shows pilot episode only, once its watched the script can then monitor the rest of the season. Keep or delete previous episodes.  
 
 ## Features
@@ -115,26 +116,30 @@ Docker Instructions
   Run the Docker Container
 ```
     docker run -d \
-      --env-file=.env \
+      --env-file .env \
       --env CONFIG_PATH=/app/config/config.json \
       -p 5001:5001 \
-      -v $(pwd):/app \
-      -v $(pwd)/logs:/app/logs \
-      -v $(pwd)/config:/app/config \
-      -v $(pwd)/temp:/app/temp \
+      -v ${PWD}/logs:/app/logs \
+      -v ${PWD}/config:/app/config \
+      -v ${PWD}/temp:/app/temp \
       --restart unless-stopped \
-      vansmak/ocdarr:arm
+      vansmak/ocdarr:amd64
+  
 
 ```
 
 
 Modify config.json to fine-tune behavior locally at /config/config.json or http://dockerurl:port  settings.
 
-  get_option: '#' of episodes to get or 'season' for full seasons.
-  action_option: 'search' to search episodes, 'monitor' to only monitor.
-  keep_watched: '#' of watched episodes to keep or 'season'.
-  always_keep: show names to keep even if delete is set, comma seperated
-  monitor_watched: true or false, keep watched episodes monitored or not
+      get_option: '#' of episodes to get or 'season' for full seasons.
+  
+      action_option: 'search' to search episodes, 'monitor' to only monitor.
+  
+      keep_watched: '#' of watched episodes to keep or 'season' to keep current seasons episodes only OR 'all' will keep everything (no deleting)
+  
+      always_keep: show names to keep even if delete is set, comma seperated
+  
+      monitor_watched: true or false, keep watched episodes monitored or not
 
 Additional Notes
 

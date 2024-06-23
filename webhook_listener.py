@@ -14,7 +14,7 @@ load_dotenv()
 
 # Load environment variables
 SONARR_URL = os.getenv('SONARR_URL')
-
+MISSING_LOG_PATH = os.getenv('MISSING_LOG_PATH', '/app/logs/missing.log')
 
 # Setup logging to capture all logs
 logging.basicConfig(filename=os.getenv('LOG_PATH', '/app/logs/app.log'), 
@@ -37,12 +37,11 @@ def load_config():
             return json.load(file)
     except FileNotFoundError:
         default_config = {
-            'get_option': 'episode',
+            'get_option': 1,
             'action_option': 'search',
             'keep_watched': 1,
-            'monitor_watched': false,
+            'monitor_watched': False,
             'always_keep': []
-            
         }
         save_config(default_config)
         return default_config
@@ -60,6 +59,9 @@ def get_missing_log_content():
             return file.read()
     except FileNotFoundError:
         return "No missing entries logged."
+    except Exception as e:
+        app.logger.error(f"Failed to read missing log: {str(e)}")
+        return "Failed to read log."
 
 
 @app.route('/')
@@ -68,68 +70,57 @@ def home():
     preferences = sonarr_utils.load_preferences()
     current_series = sonarr_utils.fetch_series_and_episodes(preferences)
     upcoming_premieres = sonarr_utils.fetch_upcoming_premieres(preferences)
-    return render_template('index.html', config=config, current_series=current_series, upcoming_premieres=upcoming_premieres,sonarr_url=SONARR_URL)
+    missing_log_content = get_missing_log_content()  # Fetch the missing log content here
+    return render_template('index.html', config=config, current_series=current_series, upcoming_premieres=upcoming_premieres, sonarr_url=SONARR_URL, missing_log=missing_log_content)
+
+
+
 
 @app.route('/settings')
 def settings():
     config = load_config()
     missing_log_content = get_missing_log_content()
     message = request.args.get('message', '')
-    # Use the index template, ensure the settings section is shown
-    return render_template('index.html', config=config, message=message, missing_log=missing_log_content, sonarr_url=SONARR_URL, show_settings=True)
+
+    # Debugging: Print or log the content to ensure it's read correctly
+    app.logger.debug(f"Missing Log Content: {missing_log_content}")
+    
+    # Also check if any specific parameter forces the settings section to be displayed
+    show_settings = request.args.get('show_settings', 'false').lower() == 'true'
+    
+    # Return the rendered template with all necessary variables
+    return render_template('index.html', 
+                           config=config, 
+                           message=message, 
+                           missing_log=missing_log_content, 
+                           sonarr_url=SONARR_URL, 
+                           show_settings=show_settings)
 
 
 @app.route('/update-settings', methods=['POST'])
 def update_settings():
     config = load_config()
-    
-    # Update the configuration with form data
-    get_option = request.form.get('get_option')
-    if get_option.isdigit():  # If it's a number, convert to int
-        config['get_option'] = int(get_option)
-    else:
-        config['get_option'] = get_option  # Otherwise, save as string
-
-    action_option = request.form.get('action_option')
-    config['action_option'] = action_option
-
-    keep_watched = request.form.get('keep_watched')
-    if keep_watched.isdigit():  # Handling numbers for episodes to keep
-        config['keep_watched'] = int(keep_watched)
-    else:
-        config['keep_watched'] = keep_watched
-
-    always_keep = request.form.get('always_keep', '').split(',')
-    config['always_keep'] = [normalize_name(name.strip()) for name in always_keep if name.strip()]  # Normalize and save
-
-     # Add the monitor_watched setting
-    monitor_watched = request.form.get('monitor_watched', 'false').lower() == 'true'
-    config['monitor_watched'] = monitor_watched
-
-    save_config(config)  # Save the updated configuration
-
-    # Redirect back to the settings section with a success message
-    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return redirect(url_for('home', section='settings', message=f"Settings updated successfully on {current_time}"))
-
-
+    config['get_option'] = request.form.get('get_option')
+    config['action_option'] = request.form.get('action_option')
+    config['keep_watched'] = request.form.get('keep_watched')
+    config['always_keep'] = [normalize_name(name.strip()) for name in request.form.get('always_keep', '').split(',') if name.strip()]
+    config['monitor_watched'] = request.form.get('monitor_watched', 'false').lower() == 'true'
+    save_config(config)
+    return redirect(url_for('home', section='settings', message="Settings updated successfully"))
 
 @app.route('/webhook', methods=['POST'])
 def handle_server_webhook():
     app.logger.info("Received POST request from Tautulli")
-    data = request.json  # Assuming data is properly formatted JSON from Tautulli
-
+    data = request.json
     if data:
         app.logger.info(f"Webhook received with data: {data}")
         try:
-            # Write the received data to a temporary file
-            with open('/app/temp/data_from_tautulli.json', 'w') as f:
+            temp_dir = '/app/temp'
+            os.makedirs(temp_dir, exist_ok=True)  # Ensure the temp directory exists
+            with open(os.path.join(temp_dir, 'data_from_tautulli.json'), 'w') as f:
                 json.dump(data, f)
             app.logger.info("Data successfully written to data_from_tautulli.json")
-
-            # Trigger the script processing
             result = subprocess.run(["python3", "/app/servertosonarr.py"], capture_output=True, text=True)
-            app.logger.info("Successfully ran servertosonarr.py: " + result.stdout)
             if result.stderr:
                 app.logger.error("Errors from servertosonarr.py: " + result.stderr)
         except Exception as e:
@@ -137,7 +128,6 @@ def handle_server_webhook():
             return jsonify({'status': 'error', 'message': str(e)}), 500
         return jsonify({'status': 'success', 'message': 'Script triggered successfully'}), 200
     else:
-        app.logger.error("No data received from webhook")
         return jsonify({'status': 'error', 'message': 'No data received'}), 400
 
 if __name__ == '__main__':
